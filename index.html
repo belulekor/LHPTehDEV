@@ -63,30 +63,7 @@ var BANTU_SETELAH_DETIK = 15;     /* tombol "Buka langsung" muncul bila layar pe
 var PESAN_LAMBAT_DETIK = 8;       /* pesan "server sedang dibangunkan" */
 /* ===================================================================== */
 
-(function () {
-  var $ = function (i) { return document.getElementById(i); };
-  var ok = /^https:\/\/script\.google\.com\/.+\/dev(\?.*)?$/.test(APPS_SCRIPT_URL);
-  var frame = $("app"), spl = $("spl"), msg = $("msg"), mulai = Date.now(), selesai = false;
 
-  function standalone() {
-    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  }
-  function tutupSplash() {
-    if (selesai) return; selesai = true;
-    var sisa = Math.max(0, 500 - (Date.now() - mulai));      /* tampil minimal 0,5 detik agar tidak berkedip */
-    setTimeout(function () { spl.classList.add("off"); $("bantu").hidden = true; }, sisa);
-  }
-
-  if (!ok) {
-    msg.textContent = "Alamat Apps Script belum diatur. Buka index.html lalu isi APPS_SCRIPT_URL.";
-  } else {
-    $("bantu").href = APPS_SCRIPT_URL;
-    frame.addEventListener("load", tutupSplash);
-    frame.src = APPS_SCRIPT_URL;
-    setTimeout(function () { if (!selesai) msg.textContent = "Server sedang dibangunkan. Kunjungan pertama setelah lama tidak dibuka bisa sampai 30 detik."; }, PESAN_LAMBAT_DETIK * 1000);
-    setTimeout(function () { if (!selesai) $("bantu").hidden = false; }, BANTU_SETELAH_DETIK * 1000);
-    setTimeout(tutupSplash, 45000);                          /* jaring pengaman: jangan menutup layar selamanya */
-  }
 
   /* koneksi */
   function koneksi() { $("off").hidden = navigator.onLine; }
