@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LHP Pabrik Teh</title>
+<title>LHP Pabrik Teh DevMode</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1c5d3c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="LHP Teh DEV">
+<meta name="apple-mobile-web-app-title" content="LHP Teh DevMode">
 <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
@@ -42,12 +42,12 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 
 <div id="spl" role="status" aria-live="polite">
   <img src="icons/icon-192.png" alt="" width="96" height="96">
-  <b>LHP Pabrik Teh</b>
+  <b>LHP Pabrik Teh DevMode</b>
   <div class="bar"><i></i></div>
   <div id="msg">Memuat aplikasi…</div>
 </div>
 
-<iframe id="app" title="LHP Pabrik Teh" allow="fullscreen"></iframe>
+<iframe id="app" title="LHP Pabrik Teh DevMode" allow="fullscreen"></iframe>
 
 <div id="off" hidden>Tidak ada koneksi internet. Data akan dimuat setelah tersambung kembali.</div>
 <button id="ins" class="btn" type="button" hidden>Pasang aplikasi</button>
@@ -56,14 +56,43 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 
 <script>
 /* ================== PENGATURAN (ubah hanya bagian ini) ==================
-   Isi dengan alamat web app Apps Script yang berakhiran /exec
-   (Deploy > Manage deployments > Web app > URL).                           */
-var  = "https://script.google.com/macros/s/AKfycbyuHOYn_bD7sz-QWfRCcYYnfodeeYWmWr--aJOVZAk/dev";
+   MODE "dev"  : memakai alamat /dev  (uji coba, hanya untuk pemilik/editor skrip)
+   MODE "exec" : memakai alamat /exec (Deploy > Manage deployments > Web app > URL)
+   Saat sudah final, cukup ganti MODE menjadi "exec" dan isi URL_EXEC.        */
+var MODE = "dev";
+var URL_DEV  = "https://script.google.com/macros/s/AKfycbyuHOYn_bD7sz-QWfRCcYYnfodeeYWmWr--aJOVZAk/dev";
+var URL_EXEC = "https://script.google.com/macros/s/AKfycbwfAutFo8R97OJaZA423d9Gkg7Jv5ZXuSA1RRyVCDbNjKMXHB0aLY0OLnmevC3reGCt/exec";
 var BANTU_SETELAH_DETIK = 15;     /* tombol "Buka langsung" muncul bila layar pembuka belum hilang */
 var PESAN_LAMBAT_DETIK = 8;       /* pesan "server sedang dibangunkan" */
 /* ===================================================================== */
 
+var APPS_SCRIPT_URL = (MODE === "dev") ? URL_DEV : URL_EXEC;
 
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  /* tanpa pengecekan akhiran: /dev maupun /exec langsung diterima */
+  var ok = /^https:\/\/script\.google\.com\//.test(APPS_SCRIPT_URL);
+  var frame = $("app"), spl = $("spl"), msg = $("msg"), mulai = Date.now(), selesai = false;
+
+  function standalone() {
+    return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  }
+  function tutupSplash() {
+    if (selesai) return; selesai = true;
+    var sisa = Math.max(0, 500 - (Date.now() - mulai));      /* tampil minimal 0,5 detik agar tidak berkedip */
+    setTimeout(function () { spl.classList.add("off"); $("bantu").hidden = true; }, sisa);
+  }
+
+  if (!ok) {
+    msg.textContent = "Alamat Apps Script belum diatur. Buka index.html lalu isi URL_DEV / URL_EXEC.";
+  } else {
+    $("bantu").href = APPS_SCRIPT_URL;
+    frame.addEventListener("load", tutupSplash);
+    frame.src = APPS_SCRIPT_URL;
+    setTimeout(function () { if (!selesai) msg.textContent = "Server sedang dibangunkan. Kunjungan pertama setelah lama tidak dibuka bisa sampai 30 detik."; }, PESAN_LAMBAT_DETIK * 1000);
+    setTimeout(function () { if (!selesai) $("bantu").hidden = false; }, BANTU_SETELAH_DETIK * 1000);
+    setTimeout(tutupSplash, 45000);                          /* jaring pengaman: jangan menutup layar selamanya */
+  }
 
   /* koneksi */
   function koneksi() { $("off").hidden = navigator.onLine; }
